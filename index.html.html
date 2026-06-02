@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Third Year Medical School Grade Calculator by yasser</title>
+    <style>
+        /* ========================
+           CSS VARIABLES & RESET
+        ======================== */
+        :root {
+            --bg-color: #030712;
+            --glass-bg: rgba(13, 22, 45, 0.3);
+            --glass-bg-hover: rgba(13, 22, 45, 0.5);
+            --glass-border: rgba(0, 240, 255, 0.15);
+            --glass-border-focus: rgba(0, 240, 255, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --cyan-glow: #00f0ff;
+            --cyan-glow-dim: rgba(0, 240, 255, 0.2);
+            
+            /* Status Colors */
+            --status-green: #10b981;
+            --status-green-glow: rgba(16, 185, 129, 0.3);
+            --status-orange: #f59e0b;
+            --status-orange-glow: rgba(245, 158, 11, 0.3);
+            --status-red: #ef4444;
+            --status-red-glow: rgba(239, 68, 68, 0.3);
+            
+            --border-radius: 20px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ========================
+           BACKGROUND EFFECTS
+        ======================== */
+        .ambient-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.05), transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(0, 80, 255, 0.05), transparent 40%);
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .blob-1 {
+            top: -10%; left: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.2), transparent 70%);
+        }
+
+        .blob-2 {
+            bottom: -10%; right: -10%;
+            width: 60vw; height: 60vw;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.15), transparent 70%);
+            animation-delay: -10s;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 0;
+        }
+
+        .particles-container {
+            position: absolute;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--cyan-glow);
+            border-radius: 50%;
+            opacity: 0;
+            box-shadow: 0 0 10px var(--cyan-glow);
+            animation: particle-float infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
+        }
+
+        @keyframes particle-float {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+        }
+
+        /* ========================
+           LAYOUT & CONTAINER
+        ======================== */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1100px;
+            padding: 3rem 1.5rem;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            animation: fadeUp 1s ease-out forwards;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========================
+           HERO SECTION
+        ======================== */
+        .hero {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .badge {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--cyan-glow);
+            box-shadow: 0 0 20px var(--cyan-glow-dim);
+            backdrop-filter: blur(10px);
+            margin-bottom: 0.5rem;
+            animation: pulse 3s infinite alternate;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            line-height: 1.2;
+            background: linear-gradient(to right, #fff, var(--cyan-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0, 240, 255, 0.2);
+        }
+
+        .hero h2 {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .hero h2 span {
+            color: var(--cyan-glow);
+            font-weight: 600;
+        }
+
+        /* ========================
+           MAIN TABLE DASHBOARD
+        ======================== */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 3.5fr 1.5fr 1fr 1.5fr;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-left: 4.5rem; /* Offset for vertical labels */
+        }
+
+        .section-group {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .vertical-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem 0.5rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--cyan-glow);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+        }
+
+        .rows-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .module-row {
+            display: grid;
+            grid-template-columns: 3.5fr 1.5fr 1fr 1.5fr;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid transparent;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            transition: var(--transition);
+        }
+
+        .module-row:hover {
+            background: var(--glass-bg-hover);
+            border: 1px solid var(--glass-border);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-name {
+            font-weight: 500;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .module-icon {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--cyan-glow);
+            box-shadow: 0 0 8px var(--cyan-glow);
+        }
+
+        /* INPUTS */
+        .grade-input {
+            width: 100%;
+            max-width: 100px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.6rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .grade-input:focus {
+            border-color: var(--cyan-glow);
+            box-shadow: 0 0 15px var(--cyan-glow-dim);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .grade-input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .coef-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            width: fit-content;
+        }
+
+        .row-total {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--cyan-glow);
+            text-shadow: 0 0 10px var(--cyan-glow-dim);
+        }
+
+        /* ========================
+           RESULTS SECTION
+        ======================== */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--glass-border-focus);
+            box-shadow: 0 15px 40px rgba(0, 240, 255, 0.1);
+        }
+
+        .stat-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            z-index: 2;
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            z-index: 2;
+            transition: color 0.4s ease;
+        }
+
+        .stat-card.active-status .stat-value {
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        /* Progress Circle for Average */
+        .progress-circle {
+            position: absolute;
+            width: 120px; height: 120px;
+            z-index: 1;
+            opacity: 0.15;
+            transition: var(--transition);
+        }
+        
+        .progress-circle circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
+        }
+
+        /* ========================
+           CONTROLS & FOOTER
+        ======================== */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan-glow);
+            box-shadow: 0 0 15px var(--cyan-glow-dim);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-bottom: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+
+        footer:hover {
+            opacity: 1;
+            color: var(--cyan-glow);
+            text-shadow: 0 0 10px var(--cyan-glow-dim);
+        }
+
+        /* ========================
+           TOAST NOTIFICATIONS
+        ======================== */
+        #toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateX(120%);
+            animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.success { border-color: var(--status-green); }
+        .toast.warning { border-color: var(--status-orange); }
+
+        @keyframes slideIn {
+            100% { transform: translateX(0); }
+        }
+        @keyframes slideOut {
+            100% { transform: translateX(120%); opacity: 0; }
+        }
+        @keyframes pulse {
+            100% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.4); }
+        }
+
+        /* ========================
+           RESPONSIVE DESIGN
+        ======================== */
+        @media (max-width: 900px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .hero h1 { font-size: 2.2rem; }
+        }
+
+        @media (max-width: 768px) {
+            .table-header { display: none; }
+            .section-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .vertical-label {
+                writing-mode: horizontal-tb;
+                transform: none;
+                padding: 0.8rem;
+                letter-spacing: 2px;
+            }
+            .module-row {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+                text-align: center;
+                padding: 1.5rem;
+            }
+            .module-name { justify-content: center; }
+            .grade-input { max-width: 100%; }
+            .coef-badge { margin: 0 auto; }
+            .row-total::before { content: 'Total: '; color: var(--text-muted); font-weight: normal; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-background">
+        <div class="grid-overlay"></div>
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="particles-container" id="particles"></div>
+    </div>
+
+    <div class="dashboard-container">
+        
+        <div class="hero">
+            <div class="badge">Med School Grade Calculator</div>
+            <h1>Third-Year Med School</h1>
+            <h2>Designed <span>by Yasser</span></h2>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Smart Academic Calculating System for Medical Students</p>
+        </div>
+
+        <div class="glass-panel">
+            <div class="table-header">
+                <div>Module / Unité</div>
+                <div style="text-align: center;">Note /20</div>
+                <div style="text-align: center;">Coef</div>
+                <div style="text-align: right;">Total</div>
+            </div>
+
+            <div class="section-group">
+                <div class="vertical-label">UNITÉS</div>
+                <div class="rows-container" id="unites-container">
+                    </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--glass-border); margin: 0.5rem 0; opacity: 0.5;">
+
+            <div class="section-group">
+                <div class="vertical-label">MODULES</div>
+                <div class="rows-container" id="modules-container">
+                    </div>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <div class="stat-card">
+                <div class="stat-title">Somme des Coef</div>
+                <div class="stat-value" id="res-sum-coef">26</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Somme des Total</div>
+                <div class="stat-value" id="res-sum-total">0.00</div>
+            </div>
+            <div class="stat-card active-status" id="moyenne-card">
+                <svg class="progress-circle" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.2)"></circle>
+                    <circle id="moyenne-circle" cx="50" cy="50" r="40" stroke="var(--cyan-glow)" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                </svg>
+                <div class="stat-title">Moyenne</div>
+                <div class="stat-value" id="res-moyenne">0.00</div>
+            </div>
+            <div class="stat-card active-status" id="status-card">
+                <div class="stat-title">Status</div>
+                <div class="stat-value" id="res-status" style="font-size: 1.8rem;">En attente</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="saveData()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                Save Data
+            </button>
+            <button class="btn btn-danger" onclick="resetData()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Reset All
+            </button>
+        </div>
+
+        <footer>
+            © 2026 Designed by yasser.
+        </footer>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // ========================
+        // DATA STRUCTURE
+        // ========================
+        const curriculum = {
+            unites: [
+                { id: 'uei01', name: 'UEI 01: Cardio-Respiratoire et Sang', coef: 4 },
+                { id: 'uei02', name: 'UEI 02: Neuro', coef: 4 },
+                { id: 'uei03', name: 'UEI 03: Endocrino', coef: 4 },
+                { id: 'uei04', name: 'UEI 04: Digestive', coef: 4 }
+            ],
+            modules: [
+                { id: 'imm', name: 'Immunologie', coef: 2 },
+                { id: 'ana', name: 'Anapath', coef: 2 },
+                { id: 'pha', name: 'Pharmacologie', coef: 2 },
+                { id: 'mic', name: 'Microbiologie', coef: 2 },
+                { id: 'par', name: 'Parasitologie', coef: 2 }
+            ]
+        };
+
+        const TOTAL_COEF = 26;
+        const STORAGE_KEY = 'medical_grades_yasser_v1';
+
+        // ========================
+        // INITIALIZATION
+        // ========================
+        document.addEventListener('DOMContentLoaded', () => {
+            generateBackgroundParticles();
+            renderTable();
+            loadSavedData();
+            calculateResults();
+        });
+
+        // ========================
+        // UI RENDERING
+        // ========================
+        function renderTable() {
+            const unitesContainer = document.getElementById('unites-container');
+            const modulesContainer = document.getElementById('modules-container');
+
+            const createRow = (item) => `
+                <div class="module-row">
+                    <div class="module-name">
+                        <div class="module-icon"></div>
+                        ${item.name}
+                    </div>
+                    <div style="text-align: center;">
+                        <input type="number" 
+                               id="input-${item.id}" 
+                               class="grade-input" 
+                               placeholder="00.00" 
+                               min="0" max="20" step="0.01"
+                               data-coef="${item.coef}"
+                               oninput="handleInput(this)">
+                    </div>
+                    <div style="text-align: center; display: flex; justify-content: center;">
+                        <div class="coef-badge">x${item.coef}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="row-total" id="total-${item.id}">0.00</span>
+                    </div>
+                </div>
+            `;
+
+            unitesContainer.innerHTML = curriculum.unites.map(createRow).join('');
+            modulesContainer.innerHTML = curriculum.modules.map(createRow).join('');
+        }
+
+        function generateBackgroundParticles() {
+            const container = document.getElementById('particles');
+            for(let i = 0; i < 30; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = `${Math.random() * 100}vw`;
+                p.style.width = p.style.height = `${Math.random() * 4 + 2}px`;
+                p.style.animationDuration = `${Math.random() * 15 + 10}s`;
+                p.style.animationDelay = `${Math.random() * 10}s`;
+                container.appendChild(p);
+            }
+        }
+
+        // ========================
+        // LOGIC & CALCULATIONS
+        // ========================
+        function handleInput(inputElem) {
+            // Validate limits
+            let val = parseFloat(inputElem.value);
+            if (val > 20) inputElem.value = 20;
+            if (val < 0) inputElem.value = 0;
+            
+            calculateResults();
+        }
+
+        function calculateResults() {
+            let sumTotal = 0;
+            const inputs = document.querySelectorAll('.grade-input');
+
+            inputs.forEach(input => {
+                const coef = parseFloat(input.getAttribute('data-coef'));
+                const note = parseFloat(input.value) || 0;
+                const rowTotal = note * coef;
+                
+                // Update Row Total DOM
+                const idBase = input.id.replace('input-', '');
+                document.getElementById(`total-${idBase}`).textContent = rowTotal.toFixed(2);
+                
+                sumTotal += rowTotal;
+            });
+
+            const moyenne = sumTotal / TOTAL_COEF;
+
+            // Update Results DOM
+            document.getElementById('res-sum-total').textContent = sumTotal.toFixed(2);
+            document.getElementById('res-moyenne').textContent = moyenne.toFixed(2);
+            
+            updateStatusUI(moyenne, sumTotal > 0);
+        }
+
+        function updateStatusUI(moyenne, hasData) {
+            const statusEl = document.getElementById('res-status');
+            const moyenneCard = document.getElementById('moyenne-card');
+            const statusCard = document.getElementById('status-card');
+            const circle = document.getElementById('moyenne-circle');
+
+            // Reset Classes
+            moyenneCard.style.color = '';
+            statusCard.style.color = '';
+            circle.style.stroke = 'var(--cyan-glow)';
+
+            // Circle Progress Animation (Max 20)
+            const maxOffset = 251.2; // 2 * PI * r (40)
+            const currentOffset = maxOffset - ((moyenne / 20) * maxOffset);
+            circle.style.strokeDashoffset = hasData ? currentOffset : maxOffset;
+
+            if (!hasData) {
+                statusEl.textContent = "En attente";
+                return;
+            }
+
+            if (moyenne >= 10) {
+                statusEl.textContent = "Admis";
+                applyStatusColors('var(--status-green)', 'var(--status-green-glow)');
+            } else if (moyenne >= 8 && moyenne < 10) {
+                statusEl.textContent = "Rattrapage";
+                applyStatusColors('var(--status-orange)', 'var(--status-orange-glow)');
+            } else {
+                statusEl.textContent = "Ajourné";
+                applyStatusColors('var(--status-red)', 'var(--status-red-glow)');
+            }
+
+            function applyStatusColors(color, glow) {
+                moyenneCard.style.color = color;
+                statusCard.style.color = color;
+                circle.style.stroke = color;
+                statusCard.style.borderColor = color;
+                statusCard.style.boxShadow = `0 10px 30px ${glow}`;
+                moyenneCard.style.borderColor = color;
+                moyenneCard.style.boxShadow = `0 10px 30px ${glow}`;
+            }
+        }
+
+        // ========================
+        // DATA MANAGEMENT
+        // ========================
+        function saveData() {
+            const data = {};
+            document.querySelectorAll('.grade-input').forEach(input => {
+                data[input.id] = input.value;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            showToast('Data saved successfully to secure storage.', 'success');
+        }
+
+        function loadSavedData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                let hasData = false;
+                for (const key in data) {
+                    if (data[key]) {
+                        const input = document.getElementById(key);
+                        if (input) {
+                            input.value = data[key];
+                            hasData = true;
+                        }
+                    }
+                }
+                if (hasData) {
+                    showToast('Saved academic records loaded.', 'success');
+                }
+            }
+        }
+
+        function resetData() {
+            if(confirm('Are you sure you want to reset all grades?')) {
+                document.querySelectorAll('.grade-input').forEach(input => {
+                    input.value = '';
+                });
+                localStorage.removeItem(STORAGE_KEY);
+                calculateResults();
+                showToast('Dashboard reset to default state.', 'warning');
+            }
+        }
+
+        // ========================
+        // TOAST NOTIFICATIONS
+        // ========================
+        function showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' 
+                ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--status-green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
+                : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--status-orange)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.5s forwards';
+                setTimeout(() => toast.remove(), 500);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
